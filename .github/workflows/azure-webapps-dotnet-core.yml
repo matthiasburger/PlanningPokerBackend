@@ -48,6 +48,6 @@ jobs:
       - name: Deploy to Azure WebApp
         uses: azure/webapps-deploy@v2
         with:
-          app-name: planning-poker-backend   # Name deiner Azure Web App
+          app-name: planning-poker   # Name deiner Azure Web App
           slot-name: Production
           package: ./publish
