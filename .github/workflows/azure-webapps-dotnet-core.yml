@@ -38,7 +38,7 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish ./PlanningPokerBackend/PlanningPokerBackend.csproj --configuration Release --output ./publish --no-build
+        run: dotnet publish ./PlanningPoker/PlanningPoker.csproj --configuration Release --output ./publish --no-build
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
