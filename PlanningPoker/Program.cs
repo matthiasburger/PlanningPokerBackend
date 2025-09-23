@@ -18,7 +18,10 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(o =>
+{
+    o.KeepAliveInterval = TimeSpan.FromSeconds(15);
+});
 
 // DI services
 builder.Services.AddSingleton<RoomManager>();
