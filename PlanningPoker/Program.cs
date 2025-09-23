@@ -21,6 +21,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddSignalR(o =>
 {
     o.KeepAliveInterval = TimeSpan.FromSeconds(15);
+    o.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
 });
 
 // DI services
