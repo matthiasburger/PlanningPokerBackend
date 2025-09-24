@@ -3,7 +3,7 @@ namespace PlanningPoker.Models;
 public class GameRoom
 {
     public required string Id { get; init; }
-    public DateTime CreatedAt { get; init; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public string? StoryTitle { get; set; }
     public bool Revealed { get; set; }
 
@@ -14,9 +14,8 @@ public class GameRoom
     public void ResetRound()
     {
         Revealed = false;
-        foreach (string key in Votes.Keys.ToList())
-        {
+        
+        foreach (string key in Votes.Keys.ToList()) 
             Votes[key] = null;
-        }
     }
 }

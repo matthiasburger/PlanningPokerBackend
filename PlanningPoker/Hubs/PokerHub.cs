@@ -74,7 +74,7 @@ public class PokerHub(RoomManager rooms) : Hub
             room.Votes.Remove(connId);
             await Groups.RemoveFromGroupAsync(connId, Group(roomId));
 
-            if (!room.Participants.Any())
+            if (room.Participants.Count == 0)
             {
                 rooms.Delete(room.Id);
                 await Clients.Group(Group(roomId)).SendAsync("roomDeleted", room.Id);
@@ -111,6 +111,23 @@ public class PokerHub(RoomManager rooms) : Hub
         await Clients.Group(Group(roomId)).SendAsync("revealed", Snapshot(room, maskVotes:false));
     }
 
+    public async Task KickUser(string roomId, string userIdToKick, string whoKicked)
+    {
+        GameRoom? room = rooms.Get(roomId);
+        if (room is null) return;
+        
+        Participant? userToKick = room.Participants.Values.FirstOrDefault(p => p.UserId == userIdToKick);
+        Participant? kickingUser = room.Participants.Values.FirstOrDefault(p => p.UserId == whoKicked);
+        if (userToKick != null && kickingUser != null)
+        {
+            await Groups.RemoveFromGroupAsync(userToKick.ConnectionId, Group(roomId));
+            await Clients.Client(userToKick.ConnectionId)
+                .SendAsync("kicked", $"Kicked by {kickingUser.DisplayName}");
+            room.Participants.Remove(userToKick.ConnectionId);
+            room.Votes.Remove(userToKick.ConnectionId);
+        }
+    }
+
     public async Task ResetRound(string roomId)
     {
         GameRoom? room = rooms.Get(roomId);
@@ -123,13 +140,13 @@ public class PokerHub(RoomManager rooms) : Hub
     {
         foreach (GameRoom room in rooms.All())
         {
-            if (room.Participants.TryGetValue(Context.ConnectionId, out Participant? p))
-            {
-                p.Connected = false;
-                p.LastSeenUtc = DateTime.UtcNow;
+            if (!room.Participants.TryGetValue(Context.ConnectionId, out Participant? p))
+                continue;
+            
+            p.Connected = false;
+            p.LastSeenUtc = DateTime.UtcNow;
 
-                await Clients.Group(Group(room.Id)).SendAsync("presence", Snapshot(room));
-            }
+            await Clients.Group(Group(room.Id)).SendAsync("presence", Snapshot(room));
         }
         await base.OnDisconnectedAsync(exception);
     }

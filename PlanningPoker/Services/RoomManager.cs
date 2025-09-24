@@ -6,7 +6,6 @@ namespace PlanningPoker.Services;
 public class RoomManager
 {
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new();
-    private readonly object _lock = new();
 
     public GameRoom CreateRoom(string? roomId = null)
     {
