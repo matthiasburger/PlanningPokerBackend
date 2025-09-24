@@ -125,6 +125,8 @@ public class PokerHub(RoomManager rooms) : Hub
                 .SendAsync("kicked", $"Kicked by {kickingUser.DisplayName}");
             room.Participants.Remove(userToKick.ConnectionId);
             room.Votes.Remove(userToKick.ConnectionId);
+            await Groups.RemoveFromGroupAsync(userToKick.ConnectionId, Group(roomId));
+            await Clients.Group(Group(roomId)).SendAsync("presence", Snapshot(room));
         }
     }
 
