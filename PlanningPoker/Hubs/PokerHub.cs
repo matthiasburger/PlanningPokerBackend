@@ -10,14 +10,14 @@ public class PokerHub(RoomManager rooms) : Hub
 
     public async Task<string> CreateAndJoin(string displayName, string userId)
     {
-        GameRoom room = rooms.CreateRoom();
+        GameRoom room = rooms.CreateRoom(userId);
         await JoinRoom(room.Id, displayName, userId);
         return room.Id;
     }
 
     public async Task JoinRoom(string roomId, string displayName, string userId)
     {
-        GameRoom room = rooms.Get(roomId) ?? rooms.CreateRoom(roomId);
+        GameRoom room = rooms.Get(roomId) ?? rooms.CreateRoom(userId, roomId);
         string connId = Context.ConnectionId;
 
         Participant? existing = room.Participants.Values.FirstOrDefault(p => p.UserId == userId);
@@ -69,20 +69,30 @@ public class PokerHub(RoomManager rooms) : Hub
         if (room is null) return;
 
         string connId = Context.ConnectionId;
+
+        Participant? existing = room.Participants.Values.FirstOrDefault(p => p.ConnectionId == connId);
+
         if (room.Participants.Remove(connId))
         {
-            room.Votes.Remove(connId);
-            await Groups.RemoveFromGroupAsync(connId, Group(roomId));
-
-            if (room.Participants.Count == 0)
+            if (room.Participants.Count == 0) // drop room if empty
             {
                 rooms.Delete(room.Id);
                 await Clients.Group(Group(roomId)).SendAsync("roomDeleted", room.Id);
                 return;
             }
 
+            if (existing is not null && room.FacilitatorUserId == existing.UserId) // reassign facilitator if needed
+            {
+                string newFacilitator = room.Participants.Values.First().UserId;
+                room.FacilitatorUserId = newFacilitator;
+                    
+                await Clients.Group(roomId).SendAsync("facilitatorChanged", newFacilitator);
+            }
+
             await Clients.Group(Group(roomId)).SendAsync("presence", Snapshot(room));
         }
+        room.Votes.Remove(connId);
+        await Groups.RemoveFromGroupAsync(connId, Group(roomId));
     }
 
     public async Task SetStory(string roomId, string? title)
@@ -115,7 +125,7 @@ public class PokerHub(RoomManager rooms) : Hub
     {
         GameRoom? room = rooms.Get(roomId);
         if (room is null) return;
-        
+
         Participant? userToKick = room.Participants.Values.FirstOrDefault(p => p.UserId == userIdToKick);
         Participant? kickingUser = room.Participants.Values.FirstOrDefault(p => p.UserId == whoKicked);
         if (userToKick != null && kickingUser != null)
@@ -164,6 +174,6 @@ public class PokerHub(RoomManager rooms) : Hub
             string? showVote = room.Revealed || !maskVotes ? vote : (vote is null ? null : "✳️");
             list.Add(new UserVote(p.ConnectionId, p.DisplayName, p.UserId, showVote));
         }
-        return new RoomSnapshot(room.Id, room.StoryTitle, room.Revealed, list);
+        return new RoomSnapshot(room, list);
     }
 }

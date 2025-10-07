@@ -1,15 +1,17 @@
 namespace PlanningPoker.Models;
 
-public class GameRoom
+public class GameRoom: IGameRoom
 {
     public required string Id { get; init; }
     public DateTime CreatedAt { get; } = DateTime.UtcNow;
     public string? StoryTitle { get; set; }
     public bool Revealed { get; set; }
-
+    
     public Dictionary<string, Participant> Participants { get; } = new();
 
     public Dictionary<string, string?> Votes { get; } = new();
+
+    public string FacilitatorUserId { get; set; } = default!;
 
     public void ResetRound()
     {

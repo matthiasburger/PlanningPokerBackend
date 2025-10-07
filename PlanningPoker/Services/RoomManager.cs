@@ -7,10 +7,10 @@ public class RoomManager
 {
     private readonly ConcurrentDictionary<string, GameRoom> _rooms = new();
 
-    public GameRoom CreateRoom(string? roomId = null)
+    public GameRoom CreateRoom(string userId, string? roomId = null)
     {
         roomId ??= Guid.NewGuid().ToString("N");
-        GameRoom room = new() { Id = roomId };
+        GameRoom room = new() { Id = roomId, FacilitatorUserId = userId };
         _rooms[room.Id] = room;
         return room;
     }
